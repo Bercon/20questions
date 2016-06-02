@@ -90,55 +90,29 @@ def get_nearby_objects_values(objects_values, how_many=10):
     return nearby_objects_values
 
 def entropy(objects, question):
-    '''Returns an entropy value. This algorithm for entropy is heavily modeled
-       on the ID3 decision tree algorithm for entropy. The difference is that here,
-       we want what would traditionally be a high entropy. To adjust for this,
-       we take the reciprocal of entropy before returning it.'''
-       
+
     objects = tuple(objects) # necessary for SQL IN statement to work
     positives = model.get_num_positives(objects, question.id) *1.0
     negatives = model.get_num_negatives(objects, question.id) *1.0
-    total = len(objects)
-    
-    if positives != 0:
-        frac_positives = (-1*positives)/total * math.log(positives/total, 2)
+   
+    if positives != 0 and negatives != 0:
+        entropy = abs(1-(positives/negatives))
     else:
-        frac_positives = 0
-    if negatives != 0:
-        frac_negatives = (-1*negatives)/total * math.log(negatives/total, 2)
-    else:
-        frac_negatives = 0
-    
-    entropy = frac_positives + frac_negatives
-    
-    entropy *= (positives + negatives)/total # weighted average
-    
-    if entropy != 0: entropy = 1/entropy # minimizes rather than maximizes
-    else: entropy = float('inf')
+        entropy = 5
     
     return entropy
 
-def simple_entropy(objects,question):
-    '''Returns an entropy value for a question based on the weights for all the
-       objects. Entropy is low if for a given question, the number of yes and no
-       answers is about even, and the number of unsure answers is low.'''
-    
-    objects = tuple(objects) # necessary for SQL IN statement to work
-    positives = model.get_num_positives(objects, question.id)
-    negatives = model.get_num_negatives(objects, question.id)
-    unknowns = model.get_num_unknowns(objects, question.id)
-    
-    question_entropy = 0
-    
-    question_entropy += positives * 1
-    question_entropy -= negatives * 1
-    question_entropy += unknowns * 5 # arbitrary weight to discourage questions with lots of unknowns
-    
-    return abs(question_entropy)
+def choose_question_revised (objects_values):
+    bestCanidates = get_nearby_objects(objects_values, 2)
+    object1 = bestCanidates[0]
+    object2 = bestCanidates[1]
+    print object1
+    print object2
+
 
 def choose_question(initial_questions, objects_values, asked_questions, how_many=10):
     '''Returns a question with the lowest entropy.'''
-    
+    choose_question_revised(1)
     if initial_questions:
         question = initial_questions.pop(0)
     else:
@@ -167,7 +141,7 @@ def choose_question(initial_questions, objects_values, asked_questions, how_many
     return question
 
 def update_local_knowledgebase(objects_values, asked_questions, question_id, answer):
-    '''Updates the the values for the current candidates based on the previus
+    '''Updates the the values for the current candidates based on the previous
        question and reply by the user.'''
     
     if not(answer in [yes, no, unsure]):
@@ -233,16 +207,3 @@ def learn(asked_questions, object_id):
     model.update_times_played(object_id)
         
     model.record_playlog(object_id, asked_questions, True)
-
-
-if __name__ == '__main__':
-    ##### Tests entropy! #####
-    objects = model.get_objects()
-    objects = [object.id for object in objects]
-    objects = tuple(objects)
-    questions = model.get_questions()
-    
-    for question in questions:
-        print question.id
-        print 'DAN:', simple_entropy(objects, question)
-        print 'ANDY:', entropy(objects, question)
