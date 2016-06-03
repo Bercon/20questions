@@ -197,9 +197,3 @@ def record_playlog(object_id, asked_questions, right):
     '''Records the questions and responses, and outcomes of each game. Allows us
        to experiment using different parameters without having to retrain from scratch.'''
     db.insert('playlog', object_id=object_id, data=str(asked_questions), right=right)
-
-def flush_tables():
-    '''Deletes everything from the database. BEWARE!'''
-    db.query('DELETE FROM objects')
-    db.query('DELETE FROM data')
-    db.query('DELETE FROM questions')

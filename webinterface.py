@@ -52,7 +52,7 @@ class index:
         if not(session.get('asked_questions')) and not(session.get('initial_questions')):
             question = 'begin'
         else:
-            question = game.choose_question(session.initial_questions, session.objects_values, session.asked_questions)
+            question = game.choose_question(session.objects_values, session.asked_questions)
             if question == None or session.count > 20:
                 raise web.seeother('/guess')
         return render.index(question, session.get('count'), nearby_objects_values)
