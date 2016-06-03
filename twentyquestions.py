@@ -89,56 +89,24 @@ def get_nearby_objects_values(objects_values, how_many=10):
         
     return nearby_objects_values
 
-def entropy(objects, question):
-
-    objects = tuple(objects) # necessary for SQL IN statement to work
-    positives = model.get_num_positives(objects, question.id) *1.0
-    negatives = model.get_num_negatives(objects, question.id) *1.0
-   
-    if positives != 0 and negatives != 0:
-        entropy = abs(1-(positives/negatives))
-    else:
-        entropy = 5
-    
-    return entropy
-
-def choose_question_revised (objects_values):
+def choose_question (objects_values, asked_questions):
     bestCanidates = get_nearby_objects(objects_values, 2)
-    object1 = bestCanidates[0]
-    object2 = bestCanidates[1]
-    print object1
-    print object2
+    object1 = bestCanidates[0].id
+    object2 = bestCanidates[1].id
 
+    questions = model.get_questions()
 
-def choose_question(initial_questions, objects_values, asked_questions, how_many=10):
-    '''Returns a question with the lowest entropy.'''
-    choose_question_revised(1)
-    if initial_questions:
-        question = initial_questions.pop(0)
-    else:
-        sorted_objects_values = sorted_objects_values = sort_objects_values(objects_values)
-        if len(sorted_objects_values) <= how_many: ### possibly some proportion of the objects in the database
-            max = len(sorted_objects_values)
-        else:
-            max = how_many
-        
-        most_likely_objects = sorted_objects_values[:max]
-        
-        objects = [object[1] for object in most_likely_objects]
-        
-        questions = model.get_questions()
-        best_question_entropy = abs(float('inf'))
-        best_question = None
-        
-        for question in questions: # loop through all the questions
-            if not(question.id in asked_questions): # if we have not already asked it, condider it
-                question_entropy = entropy(objects, question)
-                if question_entropy <= best_question_entropy:
-                    best_question_entropy = question_entropy
-                    best_question = question
-                    
-        question = best_question
-    return question
+    objectOneAnswer = 0
+    objectTwoAnswer = 0
+
+    for question in questions:
+        if (model.get_value(object1, question.id) > 0):
+            objectOneAnswer = 1
+        if (model.get_value(object2, question.id) > 0):
+            objectTwoAnswer = 1
+
+        if not(question.id in asked_questions) and (objectOneAnswer != objectTwoAnswer):
+            return question
 
 def update_local_knowledgebase(objects_values, asked_questions, question_id, answer):
     '''Updates the the values for the current candidates based on the previous
