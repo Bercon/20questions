@@ -93,19 +93,16 @@ def choose_question (objects_values, asked_questions):
     bestCanidates = get_nearby_objects(objects_values, 2)
     object1 = bestCanidates[0].id
     object2 = bestCanidates[1].id
-
+    print object1
+    print object2
     questions = model.get_questions()
 
-    objectOneAnswer = 0
-    objectTwoAnswer = 0
 
     for question in questions:
-        if (model.get_value(object1, question.id) > 0):
-            objectOneAnswer = 1
-        if (model.get_value(object2, question.id) > 0):
-            objectTwoAnswer = 1
-
+        objectOneAnswer = model.get_value(object1, question.id)
+        objectTwoAnswer = model.get_value(object2, question.id)
         if not(question.id in asked_questions) and (objectOneAnswer != objectTwoAnswer):
+            print question
             return question
 
 def update_local_knowledgebase(objects_values, asked_questions, question_id, answer):
