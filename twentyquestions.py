@@ -127,12 +127,12 @@ def update_local_knowledgebase(objects_values, asked_questions, question_id, ans
                 elif weight.value < -1 * WEIGHT_CUTOFF:
                     value = -1 * WEIGHT_CUTOFF
                 elif weight.value < unsure:
-                    value = weight.value / 2 # lessens impact of strong negatives
+                    value = -(math.log(abs(weight.value)))# lessens impact of strong negatives
                 else:
                     value = weight.value
                 
                 if (answer == no and value > 0) or (answer == yes and value < 0):
-                    value *= 5 # penalizes disagreement more
+                    value *= 3 # penalizes disagreement more
                     
                 objects_values[weight.object_id] += answer*value
         asked_questions[question_id] = answer
@@ -159,9 +159,9 @@ def learn_character(asked_questions, name):
             learn(asked_questions, new_object_id)
             return new_object_id
         
-def learn(asked_questions, object_id):
-    '''Updates the data for the correct object based on information in asked_questions.
-       Also updates times played for the object and stores the playlog.'''
+'''def learn(asked_questions, object_id):
+    #Updates the data for the correct object based on information in asked_questions.
+       #Also updates times played for the object and stores the playlog.
     for question in asked_questions:
         current_weight = model.get_value(object_id, question)
         if not(current_weight): current_weight = 0
@@ -171,4 +171,4 @@ def learn(asked_questions, object_id):
         
     model.update_times_played(object_id)
         
-    model.record_playlog(object_id, asked_questions, True)
+    model.record_playlog(object_id, asked_questions, True)'''
