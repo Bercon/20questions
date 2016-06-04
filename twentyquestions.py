@@ -30,10 +30,10 @@ def load_initial_questions():
     initial_questions.append(model.get_question_by_id(1)) # is character real
     questions = list(model.get_questions()) # converts from webpy's IterBetter to a list
     
-    for i in range(2): # up to 2 initial random questions
+    '''for i in range(2): # up to 2 initial random questions
         q = random.choice(questions)
         if not(q in initial_questions) and not(q.id in [1,6]): # real/man
-            initial_questions.append(q)
+            initial_questions.append(q)'''
     
     initial_questions.append(model.get_question_by_id(6)) # is the character a man
     
@@ -93,20 +93,22 @@ def choose_question (objects_values, asked_questions):
     bestCanidates = get_nearby_objects(objects_values, 2)
     object1 = bestCanidates[0].id
     object2 = bestCanidates[1].id
-    print object1
-    print object2
     questions = model.get_questions()
-
+    biggest_difference = [0, 0] #[Question id, difference]
 
     for question in questions:
-        objectOneAnswer = model.get_value(object1, question.id)
-        objectTwoAnswer = model.get_value(object2, question.id)
-        if not(question.id in asked_questions) and (objectOneAnswer != objectTwoAnswer):
-            print question
-            return question
+        if not(question.id in asked_questions):
+            objectOneAnswer = model.get_value(object1, question.id)
+            objectTwoAnswer = model.get_value(object2, question.id)
+
+            difference = abs(objectOneAnswer-objectTwoAnswer)
+
+            if difference > biggest_difference[1]:
+                biggest_difference = [question.id, difference]
+    return model.get_question_by_id(biggest_difference[0])
 
 def update_local_knowledgebase(objects_values, asked_questions, question_id, answer):
-    '''Updates the the values for the current candidates based on the previous
+    '''Updates the the values for the current candidates based on the previus
        question and reply by the user.'''
     
     if not(answer in [yes, no, unsure]):
@@ -127,15 +129,16 @@ def update_local_knowledgebase(objects_values, asked_questions, question_id, ans
                 elif weight.value < -1 * WEIGHT_CUTOFF:
                     value = -1 * WEIGHT_CUTOFF
                 elif weight.value < unsure:
-                    value = -(math.log(abs(weight.value)))# lessens impact of strong negatives
+                    value = weight.value / 2 # lessens impact of strong negatives
                 else:
                     value = weight.value
                 
                 if (answer == no and value > 0) or (answer == yes and value < 0):
-                    value *= 3 # penalizes disagreement more
+                    value *= 5 # penalizes disagreement more
                     
                 objects_values[weight.object_id] += answer*value
         asked_questions[question_id] = answer
+
 
 def guess(objects_values):
     '''Returns the object with the highest value.'''
@@ -158,17 +161,17 @@ def learn_character(asked_questions, name):
             new_object_id = model.add_object(name) ### adds to database and trains
             learn(asked_questions, new_object_id)
             return new_object_id
-        
-'''def learn(asked_questions, object_id):
+
+def learn(asked_questions, object_id):
     #Updates the data for the correct object based on information in asked_questions.
-       #Also updates times played for the object and stores the playlog.
+    #Also updates times played for the object and stores the playlog.
     for question in asked_questions:
         current_weight = model.get_value(object_id, question)
-        if not(current_weight): current_weight = 0
-        
+        if not(current_weight): 
+            current_weight = 0
         new_weight = current_weight + asked_questions[question]
         model.update_data(object_id, question, new_weight)
         
     model.update_times_played(object_id)
         
-    model.record_playlog(object_id, asked_questions, True)'''
+    model.record_playlog(object_id, asked_questions, True)
